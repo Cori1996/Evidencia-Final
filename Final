@@ -1,0 +1,172 @@
+// Paquetes que se importaran para le funcionamiento del programa
+import java.io.*;
+import java.time.LocalDateTime;
+import java.util.*;
+
+//Clase consultorio o base de datos del sistema
+public class Consultorio {
+private List<Doctor> doctores = new ArrayList<>();
+private List<Paciente> pacientes = new ArrayList<>();
+private List<Cita> citas = new ArrayList<>();
+private Administrador administrador;
+private static final String DB_PATH = "db/";  // Ruta donde se almacenan los archivos
+
+// Constructor que recibe el administrador y valida los archivos
+public Consultorio(Administrador administrador) {
+this.administrador = administrador;
+verificarArchivos();  // Verifica si los archivos necesarios existen
+cargarDatos();  // Carga los datos de los archivos CSV
+}
+
+// Verifica si los archivos necesarios existen y los crea si no es así
+private void verificarArchivos() {
+File dbFolder = new File(DB_PATH);
+if (!dbFolder.exists()) {
+dbFolder.mkdir();  // Crea la carpeta 'db' si no existe
+}
+// Archivos que deben existir dentro de la carpeta 'db' como se solicito con anterioridad
+String[] archivos = {"doctores.csv", "pacientes.csv", "citas.csv"};
+
+
+for (String archivo : archivos) {
+File file = new File(DB_PATH + archivo);
+if (!file.exists()) {
+try {
+file.createNewFile();  // Si no existe el archivo, lo crea
+System.out.println("Archivo creado: " + archivo);
+} catch (IOException e) {
+System.out.println("Error al crear el archivo " + archivo); // Si hay problema se avisa
+}
+}
+}
+}
+
+// Carga los datos desde los archivos CSV
+private void cargarDatos() {
+cargarDoctores();  // Carga la lista de doctores
+cargarPacientes();  // Carga la lista de pacientes
+cargarCitas();  // Carga las citas programadas
+}
+
+// Carga los doctores desde el archivo 'doctores.csv' o el nombre del documento a como se requiera.
+private void cargarDoctores() {
+File file = new File(DB_PATH + "doctores.csv");
+try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+String line;
+while ((line = br.readLine()) != null) {
+String[] data = line.split(",");  // Los datos están separados por comas
+doctores.add(new Doctor(data[0], data[1]));  // Agrega un nuevo doctor
+}
+} catch (IOException e) {
+System.out.println("Error al cargar los doctores.");
+}
+}
+
+// Carga los pacientes desde el archivo 'pacientes.csv'  o el nombre del documento a como se requiera.
+private void cargarPacientes() {
+File file = new File(DB_PATH + "pacientes.csv");
+try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+String line;
+while ((line = br.readLine()) != null) {
+String[] data = line.split(",");
+pacientes.add(new Paciente(data[0], Integer.parseInt(data[1])));  // Agrega un nuevo paciente
+}
+} catch (IOException e) {
+System.out.println("Error al cargar los pacientes.");
+}
+}
+// Carga las citas desde el archivo 'citas.csv'
+private void cargarCitas() {
+File file = new File(DB_PATH + "citas.csv");
+try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+String line;
+while ((line = br.readLine()) != null) {
+String[] data = line.split(",");
+LocalDateTime fechaHora = LocalDateTime.parse(data[0]);  // Convierte la fecha en formato LocalDateTime
+Doctor doctor = doctores.get(Integer.parseInt(data[1]));  // Obtiene el doctor usando el índice
+Paciente paciente = pacientes.get(Integer.parseInt(data[2]));  // Obtiene el paciente usando el índice
+citas.add(new Cita(fechaHora, doctor, paciente));  // Agrega la cita
+}
+} catch (IOException e) {
+System.out.println("Error al cargar las citas.");
+}
+}
+
+// Método para agregar un nuevo doctor
+public void agregarDoctor(String nombre, String especialidad) {
+doctores.add(new Doctor(nombre, especialidad));  // Crea un nuevo doctor y lo agrega a la lista
+guardarDoctor();  // Guarda los datos actualizados de los doctores
+}
+
+// Guarda la lista de doctores en el archivo 'doctores.csv'
+private void guardarDoctor() {
+File file = new File(DB_PATH + "doctores.csv");
+try (BufferedWriter writer = new BufferedWriter(new FileWriter(file, true))) {
+for (Doctor doctor : doctores) {
+writer.write(doctor.getNombre() + "," + doctor.getEspecialidad() + "\n");  // Escribe el doctor en el archivo
+}
+} catch (IOException e) {
+System.out.println("Error al guardar los doctores.");
+}
+}
+//Método para agregar un nuevo paciente
+public void agregarPaciente(String nombre, int edad) {
+pacientes.add(new Paciente(nombre, edad));  // Crea un nuevo paciente y lo agrega a la lista
+guardarPaciente();  // Guarda los datos actualizados de los pacientes
+}
+
+// Guarda la lista de pacientes en el archivo 'pacientes.csv' o el nombre que se le quiera poner
+private void guardarPaciente() {
+File file = new File(DB_PATH + "pacientes.csv");
+try (BufferedWriter writer = new BufferedWriter(new FileWriter(file, true))) {
+for (Paciente paciente : pacientes) {
+writer.write(paciente.getNombre() + "," + paciente.getEdad() + "\n");  // Escribe el paciente en el archivo
+}
+} catch (IOException e) {
+System.out.println("Error al guardar los pacientes.");
+}
+}
+// Método para crear una cita y asociarla a un doctor y un paciente
+public void crearCita(LocalDateTime fechaHora, Doctor doctor, Paciente paciente) {
+citas.add(new Cita(fechaHora, doctor, paciente));  // Crea una nueva cita
+guardarCita();  // Guarda la cita en el archivo
+}
+
+// Guarda la lista de citas en el archivo 'citas.csv'
+private void guardarCita() {
+File file = new File(DB_PATH + "citas.csv");
+try (BufferedWriter writer = new BufferedWriter(new FileWriter(file, true))) {
+for (Cita cita : citas) {
+ writer.write(cita.getFechaHora() + "," + doctores.indexOf(cita.getDoctor()) + "," + pacientes.indexOf(cita.getPaciente()) + "\n");  // Escribe la cita en el archivo
+ }
+ } catch (IOException e) {
+ System.out.println("Error al guardar las citas.");
+ }
+ }
+
+ // Muestra todas las citas programadas
+ public void mostrarCitas() {
+ for (Cita cita : citas) {
+ System.out.println(cita);  // Imprime cada cita
+ }
+ }
+
+ // Muestra todos los doctores registrados
+ public void mostrarDoctores() {
+ for (Doctor doctor : doctores) {
+ System.out.println(doctor);  // Imprime cada doctor
+ }
+ }
+
+ // Muestra todos los pacientes registrados
+ public void mostrarPacientes() {
+ for (Paciente paciente : pacientes) {
+ System.out.println(paciente);  // Imprime cada paciente
+ }
+ }
+
+ // Método para autenticar a un administrador mediante identificador y contraseña
+ public boolean autenticarAdministrador(String identificador, String contrasena) {
+ return administrador.autenticar(identificador, contrasena);  // Verifica las credenciales del administrador
+ }
+}
