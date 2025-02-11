@@ -1,4 +1,4 @@
-// Rama: develop
+
 //Clase Doctor
 // Clase que representa la informacion basica del usuario Doctor.
 class Doctor {
